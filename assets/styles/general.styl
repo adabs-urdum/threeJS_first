@@ -1,0 +1,63 @@
+html
+  font-family 'Gilroy', sans-serif
+  font-weight 200
+  font-size "%spx" % (BaseFontSize)
+  line-height 120%
+  color Black
+
+h1, h2, h3, h4, h5, h6
+  margin 0
+  padding 0
+  line-height 120%
+  font-weight 700
+
+h1
+  rem-font-size(62)
+
+h2
+  rem-font-size(44)
+
+h3
+  rem-font-size(36)
+
+h4
+  rem-font-size(26)
+
+h5, h6
+  rem-font-size(20)
+
+p
+  margin 0
+  padding 0
+
+ul, li
+  margin 0
+  padding 0
+  list-style none
+
+a
+  display inline-block
+  text-decoration none
+  color inherit
+  transition transform 0.3s ease-out
+  &:hover
+    transform scale(1.03)
+  &:active
+    transform scale(0.96)
+
+.desktop_only
+  display block
+
+.mobile_only
+  display none
+
+img, canvas
+  display block
+
+
+@media BreakpointS
+  .mobile_only
+    display block
+
+  .desktop_only
+    display none

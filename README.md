@@ -4,7 +4,7 @@
 - hit arrow up to speed up camera movement
 - hit arrow down to slow down camera movement
 - hit arrow left or right to change direction of camera movement
-- click on any object to change it's color
+- click on any object to change its color
 - click on empty space to create a bubble
 
 ## Preview

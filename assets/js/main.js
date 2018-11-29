@@ -45,7 +45,9 @@
         rayIntersects,
         lambertSphereTexture,
         hollowWorld,
-        lambertConeSpeed;
+        lambertConeSpeed,
+        lookAtCone,
+        shadow;
 
     function init(){
       setVars();
@@ -79,6 +81,7 @@
       pauseCameraMove = false;
       lambertConeSpeed = -0.01;
       lambertCubeSpeed = 0.005;
+      lookAtCone = false;
     }
 
     function initThree(){
@@ -109,16 +112,21 @@
       createPointLight();
       createSpotLight();
 
-      renderer = new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-
-      document.body.appendChild(renderer.domElement);
+      createRenderer();
     }
 
     function bindEvents(){
       document.addEventListener('keydown', onKeyDownHandler, false);
       document.addEventListener('click', onClickHandler, false);
       // document.addEventListener('mousemove', onMouseMove, false);
+    }
+
+    function createRenderer(){
+      renderer = new THREE.WebGLRenderer();
+      // renderer.shadowMap.enabled = true;
+      // renderer.shadowMap.type = THREE.PCFShadowMap;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
     }
 
     function createHollowWorld(){
@@ -193,7 +201,7 @@
     function onKeyDownHandler(e){
       var pressedKey = e.keyCode;
 
-      // console.log('pressesKey: ' + pressedKey);
+      console.log('pressesKey: ' + pressedKey);
 
       //Spacebar
       if(pressedKey == 32){
@@ -219,6 +227,10 @@
       else if (pressedKey == 40){
         thetaCameraMovement >= 0 ? thetaCameraMovement -= 0.005 : thetaCameraMovement += 0.005;
       }
+      // C to change camera view
+      else if (pressedKey == 67){
+        lookAtCone ? lookAtCone = false : lookAtCone = true;
+      }
 
     }
 
@@ -230,12 +242,37 @@
       camera = cameraPerspectiveCamera;
     }
 
+    function getCameraDistance(origine, h, v, distance){
+      origine = origine || new THREE.Vector3();
+
+      var p = new THREE.Vector3(),
+          phi = v * Math.PI / 180,
+          theta = h * Math.PI / 180;
+
+      p.x = (distance * Math.sin(phi) * Math.cos(theta)) + origine.x;
+      p.z = (distance * Math.sin(phi) * Math.sin(theta)) + origine.z;
+      p.y = (distance * Math.cos(phi)) + origine.y;
+
+      return p;
+    }
+
     function moveCamera(){
       if(!pauseCameraMove){
-        camera.position.x = 12 * Math.sin(thetaCamera);
-        camera.position.z = 12 * Math.cos(thetaCamera);
-        camera.lookAt(new THREE.Vector3(0,0,-5));
-        thetaCamera += thetaCameraMovement;
+        if(!lookAtCone){
+          lambertCone.remove(camera);
+          camera.position.x = 12 * Math.sin(thetaCamera);
+          camera.position.z = 12 * Math.cos(thetaCamera);
+          camera.lookAt(new THREE.Vector3(0,0,-5));
+          thetaCamera += thetaCameraMovement;
+        }
+        else{
+          var camPos = getCameraDistance(lambertCone.position, -20, -20, 1);
+          lambertCone.add(camera);
+          camera.position.x = camPos.x;
+          camera.position.y = camPos.y;
+          camera.position.z = camPos.z;
+          camera.lookAt(lambertCone.position);
+        }
       }
     }
 
@@ -253,6 +290,7 @@
 
     function createDirectionalLight(){
       directionalLightUp = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLightUp.castShadow = true;
       directionalLightUp.position.x = 0;
       directionalLightUp.position.y = 0;
       directionalLightUp.position.z = 15;
@@ -283,6 +321,11 @@
       spotLight1.position.y = 5;
       spotLight1.position.z = -4;
       spotLight1.target = lambertCube;
+      spotLight1.castShadow = true;
+      // spotLight1.shadow = new THREE.LightShadow(new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 501));
+      // spotLight1.shadow.bias = 0.0001;
+      // spotLight1.shadow.mapSize.width = 2048;
+      // spotLight1.shadow.mapSize.height = 1024;
       scene.add(spotLight1);
 
       spotLight2 = new THREE.SpotLight(0xff00dc, 0.5, 500, Math.PI / 4, 0.1, 1);
@@ -290,6 +333,11 @@
       spotLight2.position.y = 5;
       spotLight2.position.z = -6;
       spotLight2.target = lambertCone;
+      spotLight2.castShadow = true;
+      // spotLight2.shadow = new THREE.LightShadow(new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 501));
+      // spotLight2.shadow.bias = 0.0001;
+      // spotLight2.shadow.mapSize.width = 2048;
+      // spotLight2.shadow.mapSize.height = 1024;
       scene.add(spotLight2);
     }
 
@@ -398,6 +446,8 @@
       lambertSphere = new THREE.Mesh(geometry, material);
       lambertSphere.position.x = 0;
       lambertSphere.position.z = -5;
+      // lambertSphere.receiveShadow = true;
+      // lambertSphere.castShadow = true;
 
       material = new THREE.MeshStandardMaterial({
         side: THREE.DoubleSide,
@@ -501,6 +551,7 @@
         donut.position.x = x;
         donut.position.y = y;
         donut.position.z = z;
+        donut.speed = Math.random() / 25;
 
         scene.add(donut);
         donuts.push(donut);
@@ -511,7 +562,7 @@
 
     function moveDonuts(){
       donuts.forEach(function(cur, index){
-        cur.position.y -= donutSpeed;
+        cur.position.y -= cur.speed;
         cur.rotation.x += 0.01;
         cur.rotation.y += 0.03;
         cur.rotation.z += 0.05;
@@ -656,6 +707,8 @@
       });
       ring = new THREE.Mesh(geometry, material);
       ring.position.z = -5;
+      // ring.receiveShadow = true;
+      ring.castShadow = true;
       rings.push(ring);
       scene.add(ring);
 
@@ -668,6 +721,8 @@
       });
       ring = new THREE.Mesh(geometry, material);
       ring.position.z = -5;
+      // ring.receiveShadow = true;
+      ring.castShadow = true;
       rings.push(ring);
       scene.add(ring);
 
@@ -682,6 +737,8 @@
       });
       ring = new THREE.Mesh(geometry, material);
       ring.position.z = -5;
+      // ring.receiveShadow = true;
+      ring.castShadow = true;
       rings.push(ring);
       scene.add(ring);
 

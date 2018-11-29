@@ -4,6 +4,7 @@
 - hit arrow up to speed up camera movement
 - hit arrow down to slow down camera movement
 - hit arrow left or right to change direction of camera movement
+- hit c to switch camera target
 - click on any object to change its color
 - click on empty space to create a bubble
 
